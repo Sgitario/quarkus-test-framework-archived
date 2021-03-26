@@ -4,22 +4,16 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.quarkus.test.ServiceContext;
 
-enum QuarkusImage {
-    UBI_QUARKUS_JVM_S2I("quarkus.s2i.base-jvm-image", "registry.access.redhat.com/ubi8/openjdk-11", "latest"),
-    UBI_QUARKUS_NATIVE_S2I("quarkus.s2i.base-native-image", "quay.io/quarkus/ubi-quarkus-native-binary-s2i", "1.0");
+public enum QuarkusProperties {
+    UBI_QUARKUS_JVM_S2I("quarkus.s2i.base-jvm-image", "registry.access.redhat.com/ubi8/openjdk-11:latest"),
+    UBI_QUARKUS_NATIVE_S2I("quarkus.s2i.base-native-image", "quay.io/quarkus/ubi-quarkus-native-binary-s2i:1.0");
 
     private final String propertyKey;
     private final String defaultValue;
-    private final String version;
 
-    QuarkusImage(String propertyKey, String defaultValue, String version) {
+    QuarkusProperties(String propertyKey, String defaultValue) {
         this.propertyKey = propertyKey;
         this.defaultValue = defaultValue;
-        this.version = version;
-    }
-
-    public String getVersion() {
-        return version;
     }
 
     /**

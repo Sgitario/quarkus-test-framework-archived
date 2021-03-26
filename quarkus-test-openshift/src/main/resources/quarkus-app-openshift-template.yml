@@ -84,7 +84,7 @@ items:
             value: "/deployments/${ARTIFACT}"
           image: "${SERVICE_NAME}:1.0.0-SNAPSHOT"
           imagePullPolicy: "IfNotPresent"
-          name: "test-http"
+          name: "${SERVICE_NAME}"
           ports:
           - containerPort: ${INTERNAL_PORT}
             name: "http"

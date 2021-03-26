@@ -22,7 +22,6 @@ import io.fabric8.kubernetes.client.utils.Serialization;
 import io.fabric8.openshift.api.model.DeploymentConfig;
 import io.fabric8.openshift.api.model.ImageStream;
 import io.quarkus.test.ManagedResource;
-import io.quarkus.test.NativeTest;
 import io.quarkus.test.extension.OpenShiftExtensionBootstrap;
 import io.quarkus.test.logging.Log;
 import io.quarkus.test.logging.LoggingHandler;
@@ -33,8 +32,9 @@ import io.quarkus.test.utils.Command;
 public class OpenShiftQuarkusApplicationManagedResource implements ManagedResource {
 
     private static final int AWAIT_FOR_IMAGE_STREAMS_TIMEOUT_MINUTES = 5;
+    private static final String S2I_DEFAULT_VERSION = "latest";
 
-    private static final String QUARKUS_OPENSHIFT_TEMPLATE = "/quarkus-template.yml";
+    private static final String QUARKUS_OPENSHIFT_TEMPLATE = "/quarkus-app-openshift-template.yml";
     private static final String QUARKUS_OPENSHIFT_FILE = "openshift.yml";
 
     private static final String EXPECTED_OUTPUT_FROM_SUCCESSFULLY_STARTED = "features";
@@ -133,21 +133,37 @@ public class OpenShiftQuarkusApplicationManagedResource implements ManagedResour
 
     private String updateTemplate() {
         String template = loadTemplate();
-        QuarkusImage config = QuarkusImage.UBI_QUARKUS_JVM_S2I;
-        if (isNativeTest()) {
-            config = QuarkusImage.UBI_QUARKUS_NATIVE_S2I;
-        }
+        String s2iImage = getS2iImage();
+        String s2iVersion = getS2iImageVersion(s2iImage);
 
         template = template.replaceAll(quote("${NAMESPACE}"), facade.getNamespace())
                 .replaceAll(quote("${SERVICE_NAME}"), model.getContext().getOwner().getName())
-                .replaceAll(quote("${QUARKUS_S2I_IMAGE_BUILDER}"), config.get(model.getContext()))
-                .replaceAll(quote("${QUARKUS_S2I_IMAGE_BUILDER_VERSION}"), config.getVersion())
+                .replaceAll(quote("${QUARKUS_S2I_IMAGE_BUILDER}"), s2iImage)
+                .replaceAll(quote("${QUARKUS_S2I_IMAGE_BUILDER_VERSION}"), s2iVersion)
                 .replaceAll(quote("${ARTIFACT}"), model.getArtifact().getFileName().toString())
                 .replaceAll(quote("${INTERNAL_PORT}"), "" + getInternalPort());
 
         template = addProperties(template);
 
         return template;
+    }
+
+    private String getS2iImageVersion(String s2iImage) {
+        String s2iVersion = S2I_DEFAULT_VERSION;
+        if (s2iImage.contains(":")) {
+            s2iVersion = StringUtils.substringAfterLast(s2iImage, ":");
+        }
+
+        return s2iVersion;
+    }
+
+    private String getS2iImage() {
+        QuarkusProperties s2iImageProperty = QuarkusProperties.UBI_QUARKUS_JVM_S2I;
+        if (isNativeTest()) {
+            s2iImageProperty = QuarkusProperties.UBI_QUARKUS_NATIVE_S2I;
+        }
+
+        return s2iImageProperty.get(model.getContext());
     }
 
     private String addProperties(String template) {
@@ -200,7 +216,7 @@ public class OpenShiftQuarkusApplicationManagedResource implements ManagedResour
     }
 
     private boolean isNativeTest() {
-        return model.getContext().getTestContext().getRequiredTestClass().isAnnotationPresent(NativeTest.class);
+        return model.getLaunchMode() == LaunchMode.Native;
     }
 
     private String loadTemplate() {

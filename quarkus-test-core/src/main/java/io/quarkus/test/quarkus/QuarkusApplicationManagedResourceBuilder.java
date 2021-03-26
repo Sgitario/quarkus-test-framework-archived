@@ -46,8 +46,13 @@ public class QuarkusApplicationManagedResourceBuilder implements ManagedResource
             .load(QuarkusApplicationManagedResourceBinding.class);
 
     private ServiceContext context;
+    private LaunchMode launchMode = LaunchMode.Jvm;
     private Path artifact;
     private boolean selectedAppClasses = true;
+
+    public LaunchMode getLaunchMode() {
+        return launchMode;
+    }
 
     protected Path getArtifact() {
         return artifact;
@@ -72,6 +77,7 @@ public class QuarkusApplicationManagedResourceBuilder implements ManagedResource
         this.context = context;
         configureLogging();
         tryToReuseArtifact();
+        detectLaunchMode();
 
         for (QuarkusApplicationManagedResourceBinding binding : managedResourceBindingsRegistry) {
             if (binding.appliesFor(context)) {
@@ -80,6 +86,16 @@ public class QuarkusApplicationManagedResourceBuilder implements ManagedResource
         }
 
         return new LocalhostQuarkusApplicationManagedResource(this);
+    }
+
+    private void detectLaunchMode() {
+        if (isNativeTest()) {
+            launchMode = LaunchMode.Native;
+        } else if (artifact.endsWith(JVM_RUNNER)) {
+            launchMode = LaunchMode.FastJar;
+        } else {
+            launchMode = LaunchMode.Jvm;
+        }
     }
 
     private void configureLogging() {

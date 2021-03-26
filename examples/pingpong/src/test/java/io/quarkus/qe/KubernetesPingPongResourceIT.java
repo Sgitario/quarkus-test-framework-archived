@@ -6,11 +6,11 @@ import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.Test;
 
 import io.quarkus.test.Service;
-import io.quarkus.test.annotation.OpenShiftTest;
+import io.quarkus.test.annotation.KubernetesTest;
 import io.quarkus.test.annotation.QuarkusApplication;
 
-@OpenShiftTest
-public class OpenShiftPingPongResourceIT {
+@KubernetesTest
+public class KubernetesPingPongResourceIT {
     @QuarkusApplication
     static final Service pingPongApp = new Service("pingpong");
 
